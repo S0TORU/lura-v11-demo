@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LURA | Virtual Wet Lab</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landingPage" class="landing">
+        <div class="landing-left">
+            <div class="landing-header">
+                <div class="logo">LURA</div>
+                <button class="launch-btn" onclick="enterLab()">
+                    LAUNCH LAB <span class="arrow">↗</span>
+                </button>
+            </div>
+            
+            <div class="landing-content">
+                <h1 class="headline">LURA simulates cancer drug response.</h1>
+                <p class="subheadline">
+                    We build physics-based virtual wet labs that predict drug efficacy 
+                    in 3D tumor microenvironments. Millions of experiments per day, 
+                    86% correlation to real results.
+                </p>
+                
+                <div class="landing-cards">
+                    <div class="landing-card" onclick="enterLab()">
+                        <div class="card-content">
+                            <span class="card-tag">PLATFORM <span class="live">LIVE</span></span>
+                            <span class="card-title">Launch Virtual Wet Lab</span>
+                        </div>
+                        <span class="card-arrow">↗</span>
+                    </div>
+                    <div class="landing-card" onclick="window.open('https://docs.elyris.io', '_blank')">
+                        <div class="card-content">
+                            <span class="card-tag">DOCS</span>
+                            <span class="card-title">Technical Documentation</span>
+                        </div>
+                        <span class="card-arrow">↗</span>
+                    </div>
+                </div>
+                
+                <div class="partner-section">
+                    <h3 class="partner-title">Partner with us</h3>
+                    <p class="partner-text">
+                        We're working with pharma discovery teams and CROs to validate drug 
+                        candidates faster. Our founding team comes from Rice, Texas Medical 
+                        Center, and industry. <a href="mailto:contact@elyris.io" class="partner-link">Get in touch →</a>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="landing-footer">
+                <a href="mailto:contact@elyris.io" class="footer-link">CONTACT ↗</a>
+                <a href="https://linkedin.com/company/elyris" class="footer-link">LINKEDIN ↗</a>
+                <span class="footer-link" style="margin-left:auto;">Elyris Labs Inc.</span>
+            </div>
+        </div>
+        
+        <div class="landing-right">
+            <canvas id="landingCortex"></canvas>
+        </div>
+    </div>
+
+    <!-- Lab Container -->
+    <div id="labContainer" class="lab-container" style="display:none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span class="sidebar-logo" onclick="exitLab()">LURA</span>
+                <div class="engine-status">
+                    <span id="engineDot" class="engine-dot"></span>
+                    <div class="engine-info">
+                        <span id="engineLabel" class="engine-label">Checking...</span>
+                        <span id="engineDetail" class="engine-detail"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item active" data-view="cortex">
+                    <span class="nav-icon">◉</span>
+                    <span class="nav-label">3D Organoid</span>
+                </div>
+                <div class="nav-item" data-view="dose">
+                    <span class="nav-icon">—</span>
+                    <span class="nav-label">Dose Response</span>
+                </div>
+                <div class="nav-item" data-view="tme">
+                    <span class="nav-icon">⊞</span>
+                    <span class="nav-label">TME Sweep</span>
+                </div>
+                <div class="nav-item" data-view="combo">
+                    <span class="nav-icon">◈</span>
+                    <span class="nav-label">Combination</span>
+                </div>
+                <div class="nav-item" data-view="panel">
+                    <span class="nav-icon">▤</span>
+                    <span class="nav-label">Panel Screen</span>
+                </div>
+                <div class="nav-item" data-view="batch">
+                    <span class="nav-icon">▶</span>
+                    <span class="nav-label">Batch Screen</span>
+                </div>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="elyris-badge">Powered by Elyris Labs Inc.</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- 3D Cortex View -->
+            <div id="view-cortex" class="view active">
+                <div class="view-header">
+                    <h2>3D Organoid Simulation</h2>
+                    <p class="view-subtitle">Real-time tumor microenvironment modeling with drug penetration dynamics</p>
+                </div>
+                
+                <div class="cortex-layout">
+                    <div class="cortex-canvas-container">
+                        <div class="cortex-status">
+                            <span id="cortexPulse" class="pulse-indicator"></span>
+                            <span id="cortexStatus">Ready</span>
+                        </div>
+                        <canvas id="organoidCanvas"></canvas>
+                        <div class="cortex-legend">
+                            <span class="legend-item"><span class="dot cancer"></span>Cancer</span>
+                            <span class="legend-item"><span class="dot caf"></span>CAF</span>
+                            <span class="legend-item"><span class="dot m2"></span>M2 Mac</span>
+                            <span class="legend-item"><span class="dot dead"></span>Dead</span>
+                        </div>
+                    </div>
+                    
+                    <div class="cortex-controls">
+                        <div class="control-card">
+                            <h3>Cell & Drug Selection</h3>
+                            
+                            <div class="form-group">
+                                <label>Cell Line</label>
+                                <select id="cortexCell" class="select-input"></select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Drug Compound</label>
+                                <select id="cortexDrug" class="select-input"></select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Dose: <span id="cortexDoseVal">1.0</span> µM</label>
+                                <input type="range" id="cortexDose" class="slider" min="1" max="100" value="10" 
+                                       oninput="document.getElementById('cortexDoseVal').textContent=(this.value/10).toFixed(1)">
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>TME Composition</h3>
+                            
+                            <div class="form-group">
+                                <label>CAF Fraction: <span id="cortexCafVal">20</span>%</label>
+                                <input type="range" id="cortexCaf" class="slider" min="0" max="60" value="20"
+                                       oninput="document.getElementById('cortexCafVal').textContent=this.value">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>M2 Macrophage: <span id="cortexM2Val">10</span>%</label>
+                                <input type="range" id="cortexM2" class="slider" min="0" max="30" value="10"
+                                       oninput="document.getElementById('cortexM2Val').textContent=this.value">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Hypoxia Level: <span id="cortexHypoxiaVal">15</span>%</label>
+                                <input type="range" id="cortexHypoxia" class="slider" min="0" max="50" value="15"
+                                       oninput="document.getElementById('cortexHypoxiaVal').textContent=this.value">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Vasculature Density</label>
+                                <select id="cortexVasc" class="select-input">
+                                    <option value="low">Low (avascular core)</option>
+                                    <option value="medium" selected>Medium (sparse)</option>
+                                    <option value="high">High (vascularized)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Simulation Engine</h3>
+                            
+                            <div class="form-group">
+                                <label>Cell Resolution</label>
+                                <select id="cortexResolution" class="select-input">
+                                    <option value="128">128 cells (fast)</option>
+                                    <option value="256" selected>256 cells (balanced)</option>
+                                    <option value="512">512 cells (high-res)</option>
+                                    <option value="1024">1024 cells (ultra)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Simulation Duration</label>
+                                <select id="cortexDuration" class="select-input">
+                                    <option value="24">24 hours</option>
+                                    <option value="48">48 hours</option>
+                                    <option value="72" selected>72 hours</option>
+                                    <option value="120">120 hours (5 days)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Time Steps: <span id="cortexStepsVal">100</span></label>
+                                <input type="range" id="cortexSteps" class="slider" min="25" max="200" value="100"
+                                       oninput="document.getElementById('cortexStepsVal').textContent=this.value">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>PK Model</label>
+                                <select id="cortexPK" class="select-input">
+                                    <option value="linear">Linear elimination</option>
+                                    <option value="first_order" selected>First-order kinetics</option>
+                                    <option value="two_compartment">Two-compartment</option>
+                                </select>
+                            </div>
+                            
+                            <button id="runCortexBtn" class="btn btn-primary" onclick="runCortex()">
+                                Run Simulation
+                            </button>
+                        </div>
+                        
+                        <div class="metrics-card">
+                            <h3>Response Metrics</h3>
+                            <div class="metrics-grid">
+                                <div class="metric">
+                                    <span class="metric-label">AUC</span>
+                                    <span id="cortexAUC" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Kill %</span>
+                                    <span id="cortexKill" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Penetration</span>
+                                    <span id="cortexPen" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">T₅₀</span>
+                                    <span id="cortexT50" class="metric-value">—</span>
+                                </div>
+                            </div>
+                            <div class="metric-latency">
+                                Inference: <span id="cortexLatency">—</span>
+                            </div>
+                        </div>
+                        
+                        <div id="cortexMechanistic" class="mechanistic-card" style="display:none;">
+                            <h3>Mechanistic Insights</h3>
+                            <div class="insight-row">
+                                <span>Drug Penetration</span>
+                                <div class="insight-bar"><div id="mechPenBar" class="insight-fill green"></div></div>
+                                <span id="mechPen">—</span>
+                            </div>
+                            <div class="insight-row">
+                                <span>Hypoxia Resistance</span>
+                                <div class="insight-bar"><div id="mechHypoxiaBar" class="insight-fill orange"></div></div>
+                                <span id="mechHypoxia">—</span>
+                            </div>
+                            <div class="insight-row">
+                                <span>Stromal Shielding</span>
+                                <div class="insight-bar"><div id="mechStromaBar" class="insight-fill red"></div></div>
+                                <span id="mechStroma">—</span>
+                            </div>
+                            <div class="insight-row">
+                                <span>Net Sensitivity</span>
+                                <div class="insight-bar"><div id="mechSensBar" class="insight-fill blue"></div></div>
+                                <span id="mechSens">—</span>
+                            </div>
+                        </div>
+                        
+                        <div id="cortexTrajectory" class="trajectory-card" style="display:none;">
+                            <h3>Viability Trajectory</h3>
+                            <div id="trajectoryChart" class="mini-chart"></div>
+                            <div class="trajectory-labels">
+                                <span>0h</span><span>24h</span><span>48h</span><span>72h</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dose Response View -->
+            <div id="view-dose" class="view">
+                <div class="view-header">
+                    <h2>Dose-Response Curve</h2>
+                    <p class="view-subtitle">Multi-point dose escalation with IC50/IC90 determination</p>
+                </div>
+                
+                <div class="dose-layout">
+                    <div class="dose-controls">
+                        <div class="control-card">
+                            <h3>Cell & Drug</h3>
+                            <div class="form-group">
+                                <label>Cell Line</label>
+                                <select id="doseCell" class="select-input"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Drug</label>
+                                <select id="doseDrug" class="select-input"></select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Dose Configuration</h3>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>Min Dose (µM)</label>
+                                    <select id="doseMin" class="select-input">
+                                        <option value="0.0001">0.0001</option>
+                                        <option value="0.001" selected>0.001</option>
+                                        <option value="0.01">0.01</option>
+                                        <option value="0.1">0.1</option>
+                                    </select>
+                                </div>
+                                <div class="form-group half">
+                                    <label>Max Dose (µM)</label>
+                                    <select id="doseMax" class="select-input">
+                                        <option value="1">1</option>
+                                        <option value="10" selected>10</option>
+                                        <option value="100">100</option>
+                                        <option value="1000">1000</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Dose Points: <span id="dosePointsVal">8</span></label>
+                                <input type="range" id="dosePoints" class="slider" min="5" max="20" value="8"
+                                       oninput="document.getElementById('dosePointsVal').textContent=this.value">
+                            </div>
+                            <div class="form-group">
+                                <label>Dose Scale</label>
+                                <select id="doseScale" class="select-input">
+                                    <option value="log" selected>Logarithmic (log10)</option>
+                                    <option value="log2">Logarithmic (log2)</option>
+                                    <option value="linear">Linear</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>TME Context</h3>
+                            <div class="form-group">
+                                <label>CAF Fraction: <span id="doseCafVal">20</span>%</label>
+                                <input type="range" id="doseCaf" class="slider" min="0" max="60" value="20"
+                                       oninput="document.getElementById('doseCafVal').textContent=this.value">
+                            </div>
+                            <div class="form-group">
+                                <label>M2 Fraction: <span id="doseM2Val">10</span>%</label>
+                                <input type="range" id="doseM2" class="slider" min="0" max="30" value="10"
+                                       oninput="document.getElementById('doseM2Val').textContent=this.value">
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Analysis Options</h3>
+                            <div class="form-group">
+                                <label>Curve Fitting</label>
+                                <select id="doseFitting" class="select-input">
+                                    <option value="4pl" selected>4-Parameter Logistic</option>
+                                    <option value="3pl">3-Parameter Logistic</option>
+                                    <option value="hill">Hill Equation</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Confidence Interval</label>
+                                <select id="doseCI" class="select-input">
+                                    <option value="none">None</option>
+                                    <option value="90">90%</option>
+                                    <option value="95" selected>95%</option>
+                                    <option value="99">99%</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Replicates per Point: <span id="doseRepsVal">3</span></label>
+                                <input type="range" id="doseReps" class="slider" min="1" max="10" value="3"
+                                       oninput="document.getElementById('doseRepsVal').textContent=this.value">
+                            </div>
+                            <button class="btn btn-primary" onclick="runDose()">Generate Curve</button>
+                        </div>
+                        
+                        <div class="metrics-card">
+                            <h3>Curve Metrics</h3>
+                            <div class="metrics-grid dual">
+                                <div class="metric">
+                                    <span class="metric-label">IC50</span>
+                                    <span id="doseIC50" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">IC90</span>
+                                    <span id="doseIC90" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Hill Slope</span>
+                                    <span id="doseHill" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Emax</span>
+                                    <span id="doseEmax" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">R²</span>
+                                    <span id="doseR2" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">AUC</span>
+                                    <span id="doseAUC" class="metric-value">—</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="doseInsight" class="insight-message" style="display:none;">
+                            <div class="insight-icon">i</div>
+                            <div id="doseInsightText" class="insight-text"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="dose-chart-container">
+                        <div class="chart-title">Response Curve</div>
+                        <canvas id="doseCanvas"></canvas>
+                        <div class="dose-axis-labels">
+                            <span>Log₁₀ Concentration (µM)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TME Sweep View -->
+            <div id="view-tme" class="view">
+                <div class="view-header">
+                    <h2>TME Composition Sweep</h2>
+                    <p class="view-subtitle">Systematic exploration of CAF × M2 macrophage parameter space</p>
+                </div>
+                
+                <div class="tme-layout">
+                    <div class="tme-controls">
+                        <div class="control-card">
+                            <h3>Cell & Drug</h3>
+                            <div class="form-group">
+                                <label>Cell Line</label>
+                                <select id="tmeCell" class="select-input"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Drug</label>
+                                <select id="tmeDrug" class="select-input"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Dose: <span id="tmeDoseVal">1.0</span> µM</label>
+                                <input type="range" id="tmeDose" class="slider" min="1" max="100" value="10"
+                                       oninput="document.getElementById('tmeDoseVal').textContent=(this.value/10).toFixed(1)">
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Sweep Parameters</h3>
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label>CAF Range</label>
+                                    <select id="tmeCafRange" class="select-input">
+                                        <option value="0-30">0-30%</option>
+                                        <option value="0-50" selected>0-50%</option>
+                                        <option value="0-70">0-70%</option>
+                                        <option value="20-60">20-60%</option>
+                                    </select>
+                                </div>
+                                <div class="form-group half">
+                                    <label>M2 Range</label>
+                                    <select id="tmeM2Range" class="select-input">
+                                        <option value="0-15">0-15%</option>
+                                        <option value="0-25" selected>0-25%</option>
+                                        <option value="0-40">0-40%</option>
+                                        <option value="10-30">10-30%</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Grid Resolution</label>
+                                <select id="tmeResolution" class="select-input">
+                                    <option value="4">4×4 (16 conditions)</option>
+                                    <option value="6" selected>6×6 (36 conditions)</option>
+                                    <option value="8">8×8 (64 conditions)</option>
+                                    <option value="10">10×10 (100 conditions)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Additional TME Factors</h3>
+                            <div class="form-group">
+                                <label>Hypoxia Gradient</label>
+                                <select id="tmeHypoxia" class="select-input">
+                                    <option value="none">None (normoxic)</option>
+                                    <option value="mild" selected>Mild (5-15%)</option>
+                                    <option value="moderate">Moderate (15-30%)</option>
+                                    <option value="severe">Severe (30-50%)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>ECM Stiffness</label>
+                                <select id="tmeECM" class="select-input">
+                                    <option value="soft">Soft (normal tissue)</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="stiff">Stiff (desmoplastic)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Immune Infiltration</label>
+                                <select id="tmeImmune" class="select-input">
+                                    <option value="cold">Cold (immune desert)</option>
+                                    <option value="excluded" selected>Excluded</option>
+                                    <option value="inflamed">Inflamed (hot)</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="runTME()">Run Sweep</button>
+                        </div>
+                        
+                        <div id="tmeSelected" class="selected-cell-card" style="display:none;">
+                            <h3>Selected Condition</h3>
+                            <div class="selected-params">
+                                <div class="param-row">
+                                    <span>CAF Fraction</span>
+                                    <span id="selectedCaf">—</span>
+                                </div>
+                                <div class="param-row">
+                                    <span>M2 Fraction</span>
+                                    <span id="selectedM2">—</span>
+                                </div>
+                            </div>
+                            <div class="selected-metrics">
+                                <div class="metric">
+                                    <span class="metric-label">AUC</span>
+                                    <span id="selectedAUC" class="metric-value large">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Sensitivity</span>
+                                    <span id="selectedSens" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Penetration</span>
+                                    <span id="selectedPen" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Resistance</span>
+                                    <span id="selectedRes" class="metric-value">—</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="tmeInsights" class="tme-insights" style="display:none;">
+                            <h3>Sweep Summary</h3>
+                            <div class="insight-grid">
+                                <div class="insight-box optimal">
+                                    <span class="insight-label">Optimal</span>
+                                    <span id="tmeOptLabel" class="insight-condition">—</span>
+                                    <span id="tmeOptAUC" class="insight-value">—</span>
+                                </div>
+                                <div class="insight-box worst">
+                                    <span class="insight-label">Worst</span>
+                                    <span id="tmeWorstLabel" class="insight-condition">—</span>
+                                    <span id="tmeWorstAUC" class="insight-value">—</span>
+                                </div>
+                            </div>
+                            <div class="insight-row">
+                                <span>Avg Penetration</span>
+                                <div class="insight-bar"><div id="tmePenBar" class="insight-fill green"></div></div>
+                                <span id="tmePen">—</span>
+                            </div>
+                            <div class="insight-row">
+                                <span>Avg Stromal Shield</span>
+                                <div class="insight-bar"><div id="tmeShieldBar" class="insight-fill red"></div></div>
+                                <span id="tmeShield">—</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tme-heatmap-container">
+                        <div class="heatmap-title">Response Heatmap <span class="heatmap-hint">(click cells to inspect)</span></div>
+                        <div class="heatmap-wrapper">
+                            <div class="heatmap-y-label">CAF Fraction →</div>
+                            <div id="tmeHeatmap" class="heatmap-grid"></div>
+                            <div class="heatmap-x-label">M2 Fraction →</div>
+                        </div>
+                        <div class="heatmap-colorbar">
+                            <span>Low Response</span>
+                            <div class="colorbar-gradient"></div>
+                            <span>High Response</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combination View -->
+            <div id="view-combo" class="view">
+                <div class="view-header">
+                    <h2>Drug Combination Analysis</h2>
+                    <p class="view-subtitle">Synergy assessment using multiple interaction models</p>
+                </div>
+                
+                <div class="combo-layout">
+                    <div class="combo-controls">
+                        <div class="control-card">
+                            <h3>Cell Line</h3>
+                            <div class="form-group">
+                                <label>Target Cell Line</label>
+                                <select id="comboCell" class="select-input"></select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Drug A Configuration</h3>
+                            <div class="form-group">
+                                <label>Compound</label>
+                                <select id="comboDrugA" class="select-input"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Dose A: <span id="comboDoseAVal">1.0</span> µM</label>
+                                <input type="range" id="comboDoseA" class="slider" min="1" max="100" value="10"
+                                       oninput="document.getElementById('comboDoseAVal').textContent=(this.value/10).toFixed(1)">
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Drug B Configuration</h3>
+                            <div class="form-group">
+                                <label>Compound</label>
+                                <select id="comboDrugB" class="select-input"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Dose B: <span id="comboDoseBVal">1.0</span> µM</label>
+                                <input type="range" id="comboDoseB" class="slider" min="1" max="100" value="10"
+                                       oninput="document.getElementById('comboDoseBVal').textContent=(this.value/10).toFixed(1)">
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Combination Settings</h3>
+                            <div class="form-group">
+                                <label>Fixed Ratio</label>
+                                <select id="comboRatio" class="select-input">
+                                    <option value="1:4">1:4 (A:B)</option>
+                                    <option value="1:2">1:2 (A:B)</option>
+                                    <option value="1:1" selected>1:1 (A:B)</option>
+                                    <option value="2:1">2:1 (A:B)</option>
+                                    <option value="4:1">4:1 (A:B)</option>
+                                    <option value="custom">Custom ratio</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Synergy Model</label>
+                                <select id="comboModel" class="select-input">
+                                    <option value="bliss" selected>Bliss Independence</option>
+                                    <option value="loewe">Loewe Additivity</option>
+                                    <option value="hsa">Highest Single Agent</option>
+                                    <option value="zip">ZIP (Zero Interaction)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Analysis Mode</label>
+                                <select id="comboMode" class="select-input">
+                                    <option value="single" selected>Single Point</option>
+                                    <option value="matrix">Dose Matrix (5×5)</option>
+                                    <option value="matrix_full">Full Matrix (8×8)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>TME Context</h3>
+                            <div class="form-group">
+                                <label>CAF Fraction: <span id="comboCafVal">20</span>%</label>
+                                <input type="range" id="comboCaf" class="slider" min="0" max="60" value="20"
+                                       oninput="document.getElementById('comboCafVal').textContent=this.value">
+                            </div>
+                            <div class="form-group">
+                                <label>M2 Fraction: <span id="comboM2Val">10</span>%</label>
+                                <input type="range" id="comboM2" class="slider" min="0" max="30" value="10"
+                                       oninput="document.getElementById('comboM2Val').textContent=this.value">
+                            </div>
+                            <button class="btn btn-primary" onclick="runCombo()">Analyze Synergy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="combo-results-container">
+                        <div id="comboResults" class="combo-results" style="display:none;">
+                            <div class="combo-bar-chart">
+                                <div class="combo-bar-container">
+                                    <div class="combo-bar drug-a">
+                                        <div id="comboBarA" class="combo-bar-fill"></div>
+                                    </div>
+                                    <span id="comboLabelA" class="combo-bar-label">Drug A</span>
+                                    <span id="comboAloneA" class="combo-bar-value">—</span>
+                                </div>
+                                <div class="combo-bar-container">
+                                    <div class="combo-bar drug-b">
+                                        <div id="comboBarB" class="combo-bar-fill"></div>
+                                    </div>
+                                    <span id="comboLabelB" class="combo-bar-label">Drug B</span>
+                                    <span id="comboAloneB" class="combo-bar-value">—</span>
+                                </div>
+                                <div class="combo-bar-container combined">
+                                    <div class="combo-bar combined">
+                                        <div id="comboBarCombined" class="combo-bar-fill"></div>
+                                    </div>
+                                    <span class="combo-bar-label">Combined</span>
+                                    <span id="comboTogether" class="combo-bar-value">—</span>
+                                </div>
+                            </div>
+                            
+                            <div class="combo-metrics">
+                                <div class="combo-metric-card">
+                                    <span class="combo-metric-label">Combination Index</span>
+                                    <span id="comboCI" class="combo-metric-value">—</span>
+                                    <span id="comboVerdict" class="combo-verdict">—</span>
+                                </div>
+                                <div class="combo-metric-card">
+                                    <span class="combo-metric-label">Combined Effect</span>
+                                    <span id="comboEffect" class="combo-metric-value">—</span>
+                                </div>
+                                <div class="combo-metric-card">
+                                    <span class="combo-metric-label">Expected (Bliss)</span>
+                                    <span id="comboExpected" class="combo-metric-value">—</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="comboIsobologram" class="isobologram-container" style="display:none;">
+                            <div class="chart-title">Isobologram</div>
+                            <canvas id="isoCanvas"></canvas>
+                            <div class="iso-legend">
+                                <span class="legend-item"><span class="line additive"></span>Additive Line</span>
+                                <span class="legend-item"><span class="dot synergy"></span>Observed</span>
+                            </div>
+                        </div>
+                        
+                        <div id="comboEmpty" class="combo-empty">
+                            <div class="empty-icon">◈</div>
+                            <p>Select two drugs and run analysis to see synergy results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Screen View -->
+            <div id="view-panel" class="view">
+                <div class="view-header">
+                    <h2>Panel Screen</h2>
+                    <p class="view-subtitle">Screen single drug across cell line panel with biomarker stratification</p>
+                </div>
+                
+                <div class="panel-layout">
+                    <div class="panel-controls">
+                        <div class="control-card">
+                            <h3>Drug Selection</h3>
+                            <div class="form-group">
+                                <label>Compound</label>
+                                <select id="panelDrug" class="select-input"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Screening Dose: <span id="panelDoseVal">1.0</span> µM</label>
+                                <input type="range" id="panelDose" class="slider" min="1" max="100" value="10"
+                                       oninput="document.getElementById('panelDoseVal').textContent=(this.value/10).toFixed(1)">
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Panel Selection</h3>
+                            <div class="form-group">
+                                <label>Cell Line Panel</label>
+                                <select id="panelSet" class="select-input">
+                                    <option value="demo">Demo Panel (12 lines)</option>
+                                    <option value="lung">Lung Cancer (45 lines)</option>
+                                    <option value="breast">Breast Cancer (52 lines)</option>
+                                    <option value="colon">Colorectal (38 lines)</option>
+                                    <option value="pancreatic">Pancreatic (28 lines)</option>
+                                    <option value="ovarian">Ovarian (36 lines)</option>
+                                    <option value="solid">All Solid Tumors (320 lines)</option>
+                                    <option value="heme">Hematological (85 lines)</option>
+                                    <option value="full">Full DepMap Panel (1000+ lines)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tissue Filter</label>
+                                <select id="panelTissue" class="select-input">
+                                    <option value="all" selected>All Tissues</option>
+                                    <option value="lung">Lung</option>
+                                    <option value="breast">Breast</option>
+                                    <option value="colon">Colon</option>
+                                    <option value="pancreas">Pancreas</option>
+                                    <option value="ovary">Ovary</option>
+                                    <option value="skin">Skin</option>
+                                    <option value="blood">Blood/Lymph</option>
+                                    <option value="brain">Brain</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Biomarker Stratification</h3>
+                            <div class="form-group">
+                                <label>Mutation Filter</label>
+                                <select id="panelMutation" class="select-input">
+                                    <option value="all" selected>All Mutations</option>
+                                    <option value="KRAS">KRAS mutant</option>
+                                    <option value="BRAF">BRAF V600E</option>
+                                    <option value="EGFR">EGFR mutant</option>
+                                    <option value="TP53">TP53 mutant</option>
+                                    <option value="PIK3CA">PIK3CA mutant</option>
+                                    <option value="BRCA">BRCA1/2 deficient</option>
+                                    <option value="MSI">MSI-High</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Expression Marker</label>
+                                <select id="panelExpression" class="select-input">
+                                    <option value="none" selected>None</option>
+                                    <option value="HER2">HER2 High</option>
+                                    <option value="ER">ER Positive</option>
+                                    <option value="PD-L1">PD-L1 High</option>
+                                    <option value="MET">MET Amplified</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>TME Context</h3>
+                            <div class="form-group">
+                                <label>CAF Fraction: <span id="panelCafVal">20</span>%</label>
+                                <input type="range" id="panelCaf" class="slider" min="0" max="60" value="20"
+                                       oninput="document.getElementById('panelCafVal').textContent=this.value">
+                            </div>
+                            <div class="form-group">
+                                <label>M2 Fraction: <span id="panelM2Val">10</span>%</label>
+                                <input type="range" id="panelM2" class="slider" min="0" max="30" value="10"
+                                       oninput="document.getElementById('panelM2Val').textContent=this.value">
+                            </div>
+                            <button class="btn btn-primary" onclick="runPanel()">Run Screen</button>
+                        </div>
+                        
+                        <div id="panelStats" class="metrics-card" style="display:none;">
+                            <h3>Screen Statistics</h3>
+                            <div class="metrics-grid dual">
+                                <div class="metric">
+                                    <span class="metric-label">Sensitive</span>
+                                    <span id="panelSensitive" class="metric-value success">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Resistant</span>
+                                    <span id="panelResistant" class="metric-value danger">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Median AUC</span>
+                                    <span id="panelMedian" class="metric-value">—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Response Rate</span>
+                                    <span id="panelRR" class="metric-value">—</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="panel-results-container">
+                        <div id="panelResults" class="panel-results" style="display:none;">
+                            <div class="waterfall-container">
+                                <div class="chart-title">Waterfall Plot</div>
+                                <div id="panelWaterfall" class="waterfall-chart"></div>
+                                <div class="waterfall-baseline"></div>
+                            </div>
+                            
+                            <div id="panelTable" class="panel-table-container">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Cell Line</th>
+                                            <th>Tissue</th>
+                                            <th>Mutations</th>
+                                            <th>AUC</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="panelBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div id="panelEmpty" class="panel-empty">
+                            <div class="empty-icon">▤</div>
+                            <p>Configure screen parameters and run to see results</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Screen View -->
+            <div id="view-batch" class="view">
+                <div class="view-header">
+                    <h2>Batch Screening</h2>
+                    <p class="view-subtitle">High-throughput virtual screening with real-time streaming</p>
+                </div>
+                
+                <div class="batch-layout">
+                    <div class="batch-controls">
+                        <div class="control-card">
+                            <h3>Throughput Configuration</h3>
+                            <div class="form-group">
+                                <label>Target Samples</label>
+                                <select id="targetSamples" class="select-input">
+                                    <option value="100">100 samples</option>
+                                    <option value="500">500 samples</option>
+                                    <option value="1000" selected>1,000 samples</option>
+                                    <option value="5000">5,000 samples</option>
+                                    <option value="10000">10,000 samples</option>
+                                    <option value="50000">50,000 samples</option>
+                                    <option value="100000">100,000 samples</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Batch Size</label>
+                                <select id="batchSize" class="select-input">
+                                    <option value="16">16 (low memory)</option>
+                                    <option value="32">32</option>
+                                    <option value="64" selected>64 (balanced)</option>
+                                    <option value="128">128 (high throughput)</option>
+                                    <option value="256">256 (GPU optimized)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Parallel Workers: <span id="batchWorkersVal">4</span></label>
+                                <input type="range" id="batchWorkers" class="slider" min="1" max="16" value="4"
+                                       oninput="document.getElementById('batchWorkersVal').textContent=this.value">
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Cell Line Selection</h3>
+                            <div class="form-group">
+                                <label>Cell Panel</label>
+                                <select id="batchPanel" class="select-input">
+                                    <option value="demo">Demo Panel (12 lines)</option>
+                                    <option value="lung">Lung Cancer (45 lines)</option>
+                                    <option value="breast">Breast Cancer (52 lines)</option>
+                                    <option value="solid" selected>Solid Tumors (320 lines)</option>
+                                    <option value="heme">Hematological (85 lines)</option>
+                                    <option value="full">Full DepMap (1000+ lines)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sampling Strategy</label>
+                                <select id="batchSampling" class="select-input">
+                                    <option value="random" selected>Random sampling</option>
+                                    <option value="stratified">Stratified by tissue</option>
+                                    <option value="weighted">Weighted by prevalence</option>
+                                    <option value="exhaustive">Exhaustive (all lines)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Drug Library</h3>
+                            <div class="form-group">
+                                <label>Compound Set</label>
+                                <select id="batchDrugs" class="select-input">
+                                    <option value="demo">Demo Set (10 drugs)</option>
+                                    <option value="approved" selected>FDA Approved (150+)</option>
+                                    <option value="clinical">Clinical Candidates (500+)</option>
+                                    <option value="kinase">Kinase Inhibitors (200+)</option>
+                                    <option value="chemo">Chemotherapy (80+)</option>
+                                    <option value="targeted">Targeted Therapy (300+)</option>
+                                    <option value="custom">Custom Library</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Dose Mode</label>
+                                <select id="batchDoseMode" class="select-input">
+                                    <option value="fixed">Fixed dose (1 µM)</option>
+                                    <option value="ic50" selected>At predicted IC50</option>
+                                    <option value="range">Dose range sweep</option>
+                                    <option value="clinical">Clinical Cmax</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>TME Parameter Space</h3>
+                            <div class="form-group">
+                                <label>CAF Range: <span id="batchCafVal">0-30</span>%</label>
+                                <input type="range" id="batchCafSlider" class="slider" min="0" max="60" value="30"
+                                       oninput="document.getElementById('batchCafVal').textContent='0-'+this.value">
+                            </div>
+                            <div class="form-group">
+                                <label>M2 Range: <span id="batchM2Val">0-20</span>%</label>
+                                <input type="range" id="batchM2Slider" class="slider" min="0" max="40" value="20"
+                                       oninput="document.getElementById('batchM2Val').textContent='0-'+this.value">
+                            </div>
+                            <div class="form-group">
+                                <label>Hypoxia Levels</label>
+                                <select id="batchHypoxia" class="select-input">
+                                    <option value="fixed">Fixed (15%)</option>
+                                    <option value="sweep" selected>Sweep (0-40%)</option>
+                                    <option value="clinical">Clinical distribution</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>TME Sampling</label>
+                                <select id="batchTMESampling" class="select-input">
+                                    <option value="random" selected>Random</option>
+                                    <option value="grid">Grid (uniform)</option>
+                                    <option value="latin">Latin Hypercube</option>
+                                    <option value="sobol">Sobol Sequence</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Simulation Engine</h3>
+                            <div class="form-group">
+                                <label>Cell Resolution</label>
+                                <select id="batchResolution" class="select-input">
+                                    <option value="64">64 cells (ultra-fast)</option>
+                                    <option value="128" selected>128 cells (fast)</option>
+                                    <option value="256">256 cells (balanced)</option>
+                                    <option value="512">512 cells (high-res)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Simulation Steps: <span id="batchStepsVal">50</span></label>
+                                <input type="range" id="batchSteps" class="slider" min="25" max="150" value="50"
+                                       oninput="document.getElementById('batchStepsVal').textContent=this.value">
+                            </div>
+                            <div class="form-group">
+                                <label>Duration</label>
+                                <select id="batchDuration" class="select-input">
+                                    <option value="24">24 hours</option>
+                                    <option value="48">48 hours</option>
+                                    <option value="72" selected>72 hours</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Output & Filtering</h3>
+                            <div class="form-group">
+                                <label>Hit Threshold (AUC)</label>
+                                <select id="batchHitThreshold" class="select-input">
+                                    <option value="0.5">0.5 (permissive)</option>
+                                    <option value="0.6">0.6 (moderate)</option>
+                                    <option value="0.7" selected>0.7 (stringent)</option>
+                                    <option value="0.8">0.8 (very stringent)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Confidence Filter</label>
+                                <select id="batchConfidence" class="select-input">
+                                    <option value="none">None</option>
+                                    <option value="low">Low (>50%)</option>
+                                    <option value="medium" selected>Medium (>75%)</option>
+                                    <option value="high">High (>90%)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Export Format</label>
+                                <select id="batchFormat" class="select-input">
+                                    <option value="csv" selected>CSV</option>
+                                    <option value="json">JSON</option>
+                                    <option value="parquet">Parquet</option>
+                                    <option value="excel">Excel (.xlsx)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="control-card">
+                            <h3>Run Controls</h3>
+                            <div class="batch-btns">
+                                <button id="startBtn" class="btn btn-primary" onclick="startScreen()">Start Screen</button>
+                                <button id="stopBtn" class="btn btn-secondary" onclick="stopScreen()" disabled>Stop</button>
+                            </div>
+                            <button id="exportBtn" class="btn btn-outline" onclick="exportCSV()" disabled>Export Results</button>
+                            <button id="saveConfigBtn" class="btn btn-outline" onclick="saveBatchConfig()">Save Config</button>
+                        </div>
+                    </div>
+                    
+                    <div class="batch-dashboard">
+                        <div class="batch-stats">
+                            <div class="stat-card">
+                                <div class="stat-value" id="totalSamples">0</div>
+                                <div class="stat-label">Samples</div>
+                                <div class="stat-sub" id="samplesRate">Ready</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="throughput">0</div>
+                                <div class="stat-label">Samples/sec</div>
+                                <div class="stat-sub" id="throughputPeak">—</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="elapsed">0</div>
+                                <div class="stat-label">Elapsed (s)</div>
+                                <div class="stat-sub" id="eta">—</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="hitsCount">0</div>
+                                <div class="stat-label">Hits (>0.7)</div>
+                                <div class="stat-sub" id="hitRate">—</div>
+                            </div>
+                        </div>
+                        
+                        <div class="batch-visuals">
+                            <div class="distribution-card">
+                                <h3>Response Distribution</h3>
+                                <div class="distribution-bars">
+                                    <div class="dist-row">
+                                        <span class="dist-label">High (&gt;0.6)</span>
+                                        <div class="dist-bar-container">
+                                            <div id="highBar" class="dist-bar high"></div>
+                                        </div>
+                                        <span id="highCount" class="dist-count">0</span>
+                                    </div>
+                                    <div class="dist-row">
+                                        <span class="dist-label">Moderate</span>
+                                        <div class="dist-bar-container">
+                                            <div id="modBar" class="dist-bar mod"></div>
+                                        </div>
+                                        <span id="modCount" class="dist-count">0</span>
+                                    </div>
+                                    <div class="dist-row">
+                                        <span class="dist-label">Low (&lt;0.3)</span>
+                                        <div class="dist-bar-container">
+                                            <div id="lowBar" class="dist-bar low"></div>
+                                        </div>
+                                        <span id="lowCount" class="dist-count">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="histogram-card">
+                                <h3>AUC Histogram</h3>
+                                <div id="histogram" class="histogram"></div>
+                                <div class="histogram-labels">
+                                    <span>0</span><span>0.5</span><span>1.0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stream-container">
+                            <div class="stream-header">
+                                <h3>Live Stream</h3>
+                                <span id="liveTag" class="live-tag" style="display:none;">● LIVE</span>
+                            </div>
+                            <div id="streamFeed" class="stream-feed">
+                                <div class="stream-empty">Start screening to see live results...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
